@@ -2,12 +2,17 @@
 using MySqlConnector;
 using Oracle.ManagedDataAccess.Client;
 using System.Data.Common;
-using System.Text.RegularExpressions;
 
 namespace DataEngine.ReaderService.Services;
 
+/// <summary>
+/// Pre-flight boot probe scanning node cluster accessibility options before web service activation.
+/// </summary>
 public static class DatabaseConnectionVerifier
 {
+    /// <summary>
+    /// Asserts availability arrays across all defined deployment nodes.
+    /// </summary>
     public static async Task TestConnectionsAsync(DatabaseConfig config, CancellationToken ct = default)
     {
         if (config.ConnectionString == null || config.ConnectionString.Count == 0)
@@ -39,6 +44,6 @@ public static class DatabaseConnectionVerifier
     private static string MaskConnectionString(string connectionString)
     {
         if (string.IsNullOrEmpty(connectionString)) return string.Empty;
-        return Regex.Replace(connectionString, @"(?i)(password|pwd|user id|uid)=\s*[^;]+", "$1=******");
+        return System.Text.RegularExpressions.Regex.Replace(connectionString, @"(?i)(password|pwd|user id|uid)=\s*[^;]+", "$1=******");
     }
 }

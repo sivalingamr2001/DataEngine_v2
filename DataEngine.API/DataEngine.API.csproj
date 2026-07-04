@@ -16,11 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\DataEngine.ReaderService\DataEngine.ReaderService.csproj" />
+    <ProjectReference Include="..\DataEngine.Core\DataEngine.Core.csproj" />
+    <ProjectReference Include="..\DataEngine.TransactionService\DataEngine.TransactionService.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,81 +4,103 @@ using System.Text.Json;
 namespace DataEngine.ReaderService.Domain;
 
 /// <summary>
-/// Immutable configuration for <see cref="IFetchQueryEngine.ExecuteQueryAsync"/>.
-/// All properties are init-only to prevent post-construction mutation.
+/// Immutable configuration for query execution configurations.
 /// </summary>
 public record FetchConfig
 {
-    // ── Query source ──────────────────────────────────────────────────────────
-
     /// <summary>
     /// Looks up a stored, pre-validated query definition by key.
-    /// Preferred over <see cref="QueryText"/> for all production usage.
     /// </summary>
     public int? QueryNumber { get; init; }
 
     /// <summary>
-    /// Raw SQL — only executed when <see cref="EnableDirectQueryExecution"/> is true
-    /// AND the caller has passed <see cref="ISqlGuardian"/> validation.
-    /// Disabled by default.
+    /// Looks up a stored query definition by its unique text key string.
+    /// </summary>
+    public string? QueryKey { get; init; }
+
+    /// <summary>
+    /// Raw SQL text executed only when allowed and validated.
     /// </summary>
     public string? QueryText { get; init; }
 
     /// <summary>
-    /// Activates raw SQL execution path. Defaults to FALSE.
-    /// Must be explicitly opted-in per call; never rely on caller default.
+    /// Activates raw SQL execution pathways.
     /// </summary>
     public bool EnableDirectQueryExecution { get; init; } = false;
 
-    // ── Parameters ────────────────────────────────────────────────────────────
-
     /// <summary>
-    /// Named parameters bound safely via Dapper.
-    /// Keys must match @param placeholders in the query.
+    /// Named parameters wrapped inside a structured JSON document payload.
     /// </summary>
     public JsonDocument? InputParameters { get; init; }
 
-    // ── Pagination ────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Total records to extract per request processing execution.
+    /// </summary>
     public int Count { get; init; } = 10;
+
+    /// <summary>
+    /// Page number position offset matching target paginated indices.
+    /// </summary>
     public int PageNumber { get; init; } = 1;
 
-    // ── Server-side sorting ───────────────────────────────────────────────────
-
+    /// <summary>
+    /// Controls sorting operations across execution runtimes.
+    /// </summary>
     public bool EnableServerSideSorting { get; init; } = false;
 
     /// <summary>
-    /// Validated against INFORMATION_SCHEMA column whitelist before use.
+    /// Column fields targeted for sorting operations.
     /// </summary>
     public string? SortField { get; init; }
+
+    /// <summary>
+    /// Direction constraints applied over sorted columns.
+    /// </summary>
     public SortDirection SortDirection { get; init; } = SortDirection.Asc;
 
-    // ── Server-side filtering ─────────────────────────────────────────────────
-
+    /// <summary>
+    /// Controls server-side filters application over query scopes.
+    /// </summary>
     public bool EnableServerSideFiltering { get; init; } = false;
 
     /// <summary>
-    /// Column names inside each condition are whitelist-validated before query build.
+    /// Collection of structured condition items used to restrict query outputs.
     /// </summary>
     public IReadOnlyList<FilterCondition> FilterConditions { get; init; } = [];
 
-    // ── Search ────────────────────────────────────────────────────────────────
-
-    /// <summary>Global search — always bound as a parameter, never interpolated.</summary>
+    /// <summary>
+    /// Structured evaluation strings passed down into conditional blocks.
+    /// </summary>
     public string? SearchText { get; init; }
 
-    // ── Timezone ──────────────────────────────────────────────────────────────
-
+    /// <summary>
+    /// Timezone identifier offset mapping configurations.
+    /// </summary>
     public string? FetchTimezone { get; init; }
 }
 
+/// <summary>
+/// Structured filter evaluation schema mapped to database fields.
+/// </summary>
 public sealed record FilterCondition
 {
-    /// <summary>Column name — validated via schema whitelist before query build.</summary>
+    /// <summary>
+    /// Target database table column name indicator.
+    /// </summary>
     public string Column { get; init; } = string.Empty;
-    /// <summary>Column name — validated against INFORMATION_SCHEMA whitelist.</summary>
+
+    /// <summary>
+    /// Domain schema model field name descriptor.
+    /// </summary>
     public required string Field { get; init; }
+
+    /// <summary>
+    /// Evaluation operation used to weigh parameter data boundaries.
+    /// </summary>
     public string? Operator { get; init; }
-    /// <summary>Value is always bound as a parameter — never interpolated.</summary>
+
+    /// <summary>
+    /// Object value passed downstream inside targeted safe parameter structures.
+    /// </summary>
     public object? Value { get; init; }
 }

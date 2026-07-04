@@ -4,12 +4,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DataEngine.API.Controllers;
 
+/// <summary>
+/// Operational API gateway exposing endpoints for secure high-throughput data engine extraction pipelines.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class DataController(IGetDataService dataService) : ControllerBase
 {
-    private readonly IGetDataService _dataService = dataService;
+    private readonly IGetDataService _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
 
+    /// <summary>
+    /// Processes incoming data fetch configuration models to evaluate safe data access routines.
+    /// </summary>
     [HttpPost("fetch")]
     public async Task<IActionResult> FetchData([FromBody] FetchConfig query, CancellationToken ct)
     {
@@ -21,6 +27,11 @@ public class DataController(IGetDataService dataService) : ControllerBase
         try
         {
             FetchResult<Dictionary<string, object?>> result = await _dataService.ExecuteAsync(query, ct);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
 
             return Ok(result);
         }

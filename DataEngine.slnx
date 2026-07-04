@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="DataEngine.API/DataEngine.API.csproj" Id="f73c011d-b4d3-43de-8cbf-26a9f875c628" />
+  <Project Path="DataEngine.Core/DataEngine.Core.csproj" />
   <Project Path="DataEngine.ReaderService/DataEngine.ReaderService.csproj" Id="861d4408-ba3e-44f6-8025-ef5b456ba184" />
+  <Project Path="DataEngine.TransactionService/DataEngine.TransactionService.csproj" />
 </Solution>

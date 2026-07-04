@@ -1,6 +1,6 @@
-using DataEngine.ReaderService;
 using DataEngine.ReaderService.Domain;
 using DataEngine.ReaderService.Services;
+using DataEngine.TransactionService;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -20,14 +20,13 @@ try
         .ReadFrom.Services(services));
 
     builder.Services.AddControllers();
-
     builder.Services.AddOpenApi();
-   
+
     var provider = Enum.TryParse<DatabaseProvider>(builder.Configuration["ConnectionStrings:Provider"], true, out var parsedProvider)
         ? parsedProvider
         : DatabaseProvider.MySQL;
 
-    List<string> connectionStrings = new();
+    var connectionStrings = new List<string>();
     var connectionStringArray = builder.Configuration.GetSection("ConnectionStrings:DefaultConnection").Get<List<string>>();
 
     if (connectionStringArray != null && connectionStringArray.Count > 0)
@@ -50,6 +49,7 @@ try
     };
 
     builder.Services.AddDataEngineCore(databaseConfig);
+    builder.Services.AddDataEngineTransactionFramework();
 
     var app = builder.Build();
 
@@ -70,15 +70,12 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-
         app.MapScalarApiReference(options =>
         {
             options.WithTitle("DataEngine Core v2 Portal")
                    .WithTheme(ScalarTheme.DeepSpace)
                    .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
         });
-
-        Log.Information("Development tools initialized. OpenAPI spec available at /openapi/v1.json, Scalar UI at /scalar/v1");
     }
 
     app.UseHttpsRedirection();

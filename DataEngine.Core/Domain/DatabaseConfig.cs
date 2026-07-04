@@ -11,6 +11,8 @@ public sealed record DatabaseConfig
 
     public int MaxPageSize { get; init; } = 1000;
 
+    public bool EnableDirectQueryExecution { get; set; } = true;
+
     public int MaxDirectQueryLength { get; set; } = 10000;
 
     public int MaxRetryCount { get; init; } = 3;
