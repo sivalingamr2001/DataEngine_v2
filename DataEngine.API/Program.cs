@@ -1,3 +1,4 @@
+using DataEngine.Core.Providers;
 using DataEngine.ReaderService.Domain;
 using DataEngine.ReaderService.Services;
 using DataEngine.TransactionService;
@@ -48,8 +49,7 @@ try
         Provider = provider
     };
 
-    builder.Services.AddDataEngineCore(databaseConfig);
-    builder.Services.AddDataEngineTransactionFramework();
+    builder.Services.AddDataEngineServices(databaseConfig);
 
     var app = builder.Build();
 
@@ -58,7 +58,8 @@ try
     try
     {
         Log.Information("Verifying database target accessibility across {Count} nodes...", databaseConfig.ConnectionString.Count);
-        await DatabaseConnectionVerifier.TestConnectionsAsync(databaseConfig);
+        var providerFactory = app.Services.GetRequiredService<IDbProviderStrategyFactory>();
+        await DatabaseConnectionVerifier.TestConnectionsAsync(databaseConfig, providerFactory);
         Log.Information("Database connectivity verification successfully established.");
     }
     catch (Exception ex)

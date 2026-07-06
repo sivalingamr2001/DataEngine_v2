@@ -1,5 +1,4 @@
 ﻿using DataEngine.Core.Domain;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 
 namespace DataEngine.Core.Interfaces;
@@ -15,7 +14,7 @@ public interface IValidationService
     /// <param name="entityName">Name of the entity/table to validate</param>
     /// <param name="data">Data dictionary containing field values</param>
     /// <returns>Validation result with errors if any</returns>
-    Task<ValidationResult> ValidateAsync(string entityName, Dictionary<string, object> data, IDbTransaction? transaction = null);
+    Task<DataEngine.Core.Domain.ValidationResult> ValidateAsync(string entityName, Dictionary<string, object> data, IDbTransaction? transaction = null);
 
     /// <summary>
     /// Gets validation configuration for an entity

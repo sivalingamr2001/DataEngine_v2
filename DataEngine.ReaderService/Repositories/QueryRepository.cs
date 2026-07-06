@@ -1,4 +1,5 @@
-﻿using DataEngine.ReaderService.Domain;
+﻿using DataEngine.Core.Caching;
+using DataEngine.ReaderService.Domain;
 using DataEngine.ReaderService.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Data;
@@ -12,10 +13,12 @@ namespace DataEngine.ReaderService.Repositories;
 public class QueryRepository : IQueryRepository
 {
     private readonly ILogger<QueryRepository> _logger;
+    private readonly ITieredCache _cache;
 
-    public QueryRepository(ILogger<QueryRepository> logger)
+    public QueryRepository(ILogger<QueryRepository> logger, ITieredCache cache)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     }
 
     /// <inheritdoc />
@@ -23,42 +26,22 @@ public class QueryRepository : IQueryRepository
     {
         try
         {
-            using var command = connection.CreateCommand();
-
             if (id.HasValue)
             {
-                command.CommandText = @"
-                    SELECT id, definition_key, table_name, description, query_text, is_active, created_at, updated_at, created_by, updated_by 
-                    FROM de_query_definitions 
-                    WHERE id = @id AND is_active = 1";
-
-                var parameter = command.CreateParameter();
-                parameter.ParameterName = "@id";
-                parameter.Value = id.Value;
-                command.Parameters.Add(parameter);
-            }
-            else if (!string.IsNullOrWhiteSpace(definitionKey))
-            {
-                command.CommandText = @"
-                    SELECT id, definition_key, table_name, description, query_text, is_active, created_at, updated_at, created_by, updated_by 
-                    FROM de_query_definitions 
-                    WHERE definition_key = @definitionKey AND is_active = 1";
-
-                var parameter = command.CreateParameter();
-                parameter.ParameterName = "@definitionKey";
-                parameter.Value = definitionKey;
-                command.Parameters.Add(parameter);
-            }
-            else
-            {
-                return null;
+                return await _cache.GetOrCreateAsync(
+                    key: $"de:qd:id:{id.Value}",
+                    l1Ttl: TimeSpan.FromSeconds(60),
+                    l2Ttl: TimeSpan.FromMinutes(15),
+                    factory: () => LoadByIdOrKeyAsync(id, definitionKey, connection));
             }
 
-            using var reader = await ((DbCommand)command).ExecuteReaderAsync();
-
-            if (await reader.ReadAsync())
+            if (!string.IsNullOrWhiteSpace(definitionKey))
             {
-                return MapRow(reader);
+                return await _cache.GetOrCreateAsync(
+                    key: $"de:qd:key:{definitionKey}",
+                    l1Ttl: TimeSpan.FromSeconds(60),
+                    l2Ttl: TimeSpan.FromMinutes(15),
+                    factory: () => LoadByIdOrKeyAsync(id, definitionKey, connection));
             }
 
             return null;
@@ -73,31 +56,75 @@ public class QueryRepository : IQueryRepository
     /// <inheritdoc />
     public async Task<List<QueryDefinition>> GetAllQueryDefinitionsAsync(IDbConnection connection)
     {
-        var queries = new List<QueryDefinition>();
-
         try
         {
-            using var command = connection.CreateCommand();
-            command.CommandText = @"
-                SELECT id, definition_key, table_name, description, query_text, is_active, created_at, updated_at, created_by, updated_by 
-                FROM de_query_definitions 
-                WHERE is_active = 1 
-                ORDER BY id";
-
-            using var reader = await ((DbCommand)command).ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
-            {
-                queries.Add(MapRow(reader));
-            }
-
-            return queries;
+            return await _cache.GetOrCreateAsync(
+                key: "de:qd:all",
+                l1Ttl: TimeSpan.FromSeconds(60),
+                l2Ttl: TimeSpan.FromMinutes(15),
+                factory: () => LoadAllAsync(connection));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving all active query definitions from database cluster.");
             throw;
         }
+    }
+
+    private async Task<QueryDefinition?> LoadByIdOrKeyAsync(int? id, string? definitionKey, IDbConnection connection)
+    {
+        using var command = connection.CreateCommand();
+
+        if (id.HasValue)
+        {
+            command.CommandText = @"
+                SELECT id, definition_key, table_name, description, query_text, is_active, created_at, updated_at, created_by, updated_by 
+                FROM de_query_definitions 
+                WHERE id = @id AND is_active = 1";
+
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "@id";
+            parameter.Value = id.Value;
+            command.Parameters.Add(parameter);
+        }
+        else if (!string.IsNullOrWhiteSpace(definitionKey))
+        {
+            command.CommandText = @"
+                SELECT id, definition_key, table_name, description, query_text, is_active, created_at, updated_at, created_by, updated_by 
+                FROM de_query_definitions 
+                WHERE definition_key = @definitionKey AND is_active = 1";
+
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "@definitionKey";
+            parameter.Value = definitionKey;
+            command.Parameters.Add(parameter);
+        }
+        else
+        {
+            return null;
+        }
+
+        using var reader = await ((DbCommand)command).ExecuteReaderAsync();
+        return await reader.ReadAsync() ? MapRow(reader) : null;
+    }
+
+    private async Task<List<QueryDefinition>> LoadAllAsync(IDbConnection connection)
+    {
+        var queries = new List<QueryDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT id, definition_key, table_name, description, query_text, is_active, created_at, updated_at, created_by, updated_by 
+            FROM de_query_definitions 
+            WHERE is_active = 1 
+            ORDER BY id";
+
+        using var reader = await ((DbCommand)command).ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            queries.Add(MapRow(reader));
+        }
+
+        return queries;
     }
 
     private static QueryDefinition MapRow(DbDataReader reader)

@@ -23,5 +23,8 @@ public sealed record DatabaseConfig
 public enum DatabaseProvider
 {
     MySQL,
-    Oracle
+    Oracle,
+    SqlServer,
+    PostgreSQL,
+    Sqlite
 }

@@ -1,6 +1,10 @@
 ﻿using DataEngine.ReaderService.Domain;
 using DataEngine.ReaderService.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DataEngine.API.Controllers;
 
@@ -39,9 +43,9 @@ public class DataController(IGetDataService dataService) : ControllerBase
         {
             return StatusCode(499, "Client closed the request connection.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, $"Internal server processing error: {ex.Message}");
+            return StatusCode(500, "Internal server processing error.");
         }
     }
 }

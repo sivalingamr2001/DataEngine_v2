@@ -2,6 +2,12 @@
 
 namespace DataEngine.ReaderService.Enums;
 
+public enum CacheOption
+{
+    IMemory,
+    Redis,
+}
+
 public enum SortDirection
 {
     Asc,

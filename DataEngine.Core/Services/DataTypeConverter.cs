@@ -139,7 +139,7 @@ public class DataTypeConverter
             }
 
             // Otherwise serialize the object to JSON
-            return SerializeObject(value);
+            return System.Text.Json.JsonSerializer.Serialize(value);
         }
         catch
         {

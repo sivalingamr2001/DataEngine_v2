@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace DataEngine.TransactionService.Domain;
 
@@ -46,4 +47,23 @@ public sealed class TransactionRequest
     /// </summary>
     [JsonPropertyName("userId")]
     public string UserId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Correlation identifier propagated from the caller for downstream tracing.
+    /// </summary>
+    [JsonPropertyName("correlationId")]
+    public string CorrelationId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Caller IP address captured for audit purposes.
+    /// </summary>
+    [JsonPropertyName("ipAddress")]
+    public string? IpAddress { get; set; }
+
+    /// <summary>
+    /// When true, uses direct model property to column binding without field mappers.
+    /// Property names in ExtendedProperties map directly to database column names.
+    /// </summary>
+    [JsonProperty("useModelBinding")] // Use [JsonPropertyName("useModelBinding")] if using System.Text.Json
+    public bool UseModelBinding { get; set; } = false;
 }

@@ -1,6 +1,5 @@
-﻿using DataEngine.ReaderService.Domain;
-using MySqlConnector;
-using Oracle.ManagedDataAccess.Client;
+﻿using DataEngine.Core.Providers;
+using DataEngine.ReaderService.Domain;
 using System.Data.Common;
 
 namespace DataEngine.ReaderService.Services;
@@ -13,21 +12,18 @@ public static class DatabaseConnectionVerifier
     /// <summary>
     /// Asserts availability arrays across all defined deployment nodes.
     /// </summary>
-    public static async Task TestConnectionsAsync(DatabaseConfig config, CancellationToken ct = default)
+    public static async Task TestConnectionsAsync(DatabaseConfig config, IDbProviderStrategyFactory providerStrategyFactory, CancellationToken ct = default)
     {
         if (config.ConnectionString == null || config.ConnectionString.Count == 0)
         {
             throw new InvalidOperationException("Database configuration contains no connection strings.");
         }
 
+        var strategy = providerStrategyFactory.Get(config.Provider);
+
         foreach (var connString in config.ConnectionString)
         {
-            await using DbConnection connection = config.Provider switch
-            {
-                DatabaseProvider.MySQL => new MySqlConnection(connString),
-                DatabaseProvider.Oracle => new OracleConnection(connString),
-                _ => throw new NotSupportedException($"Database provider '{config.Provider}' is not supported.")
-            };
+            await using DbConnection connection = strategy.CreateConnection(connString);
 
             try
             {

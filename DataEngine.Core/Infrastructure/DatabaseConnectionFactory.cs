@@ -1,7 +1,6 @@
-﻿using DataEngine.ReaderService.Domain;
+﻿using DataEngine.Core.Providers;
+using DataEngine.ReaderService.Domain;
 using Microsoft.Extensions.Logging;
-using MySqlConnector;
-using Oracle.ManagedDataAccess.Client;
 using System.Data.Common;
 using System.Diagnostics;
 
@@ -13,13 +12,15 @@ namespace DataEngine.ReaderService.Services;
 public sealed class DatabaseConnectionFactory
 {
     private readonly DatabaseConfig _config;
+    private readonly IDbProviderStrategy _strategy;
     private readonly ILogger<DatabaseConnectionFactory> _logger;
     private long _replicaIndex = 0;
 
-    public DatabaseConnectionFactory(DatabaseConfig config, ILogger<DatabaseConnectionFactory> logger)
+    public DatabaseConnectionFactory(DatabaseConfig config, IDbProviderStrategyFactory providerStrategyFactory, ILogger<DatabaseConnectionFactory> logger)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _strategy = providerStrategyFactory?.Get(_config.Provider) ?? throw new ArgumentNullException(nameof(providerStrategyFactory));
     }
 
     /// <summary>
@@ -67,12 +68,7 @@ public sealed class DatabaseConnectionFactory
         {
             attempts++;
 
-            DbConnection connection = _config.Provider switch
-            {
-                DatabaseProvider.MySQL => new MySqlConnection(connectionString),
-                DatabaseProvider.Oracle => new OracleConnection(connectionString),
-                _ => throw new NotSupportedException($"Provider {_config.Provider} is not supported.")
-            };
+            DbConnection connection = _strategy.CreateConnection(connectionString);
 
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Opening database connection context for target node: {NodeLabel} (Attempt {Attempt}/{Max})", nodeLabel, attempts, maxAttempts);

@@ -1,4 +1,5 @@
-﻿using DataEngine.TransactionService.Domain;
+﻿using DataEngine.Core.Caching;
+using DataEngine.TransactionService.Domain;
 using DataEngine.TransactionService.Interfaces;
 using System.Data;
 using System.Data.Common;
@@ -8,10 +9,23 @@ namespace DataEngine.TransactionService.Repositories;
 /// <summary>
 /// Database operations layer extracting layout properties for dynamic query formatting.
 /// </summary>
-public sealed class FieldMapperRepository : IFieldMapperRepository
+public sealed class FieldMapperRepository(ITieredCache cache) : IFieldMapperRepository
 {
+    private readonly ITieredCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+
     /// <inheritdoc />
     public async Task<List<FieldMapper>> GetFieldMappersAsync(string tableName, IDbConnection connection)
+    {
+        var result = await _cache.GetOrCreateAsync(
+            key: $"de:fm:{tableName}",
+            l1Ttl: TimeSpan.FromSeconds(60),
+            l2Ttl: TimeSpan.FromMinutes(15),
+            factory: () => LoadFromDatabaseAsync(tableName, connection));
+
+        return result ?? [];
+    }
+
+    private async Task<List<FieldMapper>> LoadFromDatabaseAsync(string tableName, IDbConnection connection)
     {
         using var command = connection.CreateCommand();
         command.CommandText = @"

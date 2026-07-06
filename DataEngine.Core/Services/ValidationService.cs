@@ -2,9 +2,9 @@
 using DataEngine.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Text.RegularExpressions;
+using ValidationResult = DataEngine.Core.Domain.ValidationResult;
 
 namespace DataEngine.Core.Services;
 
