@@ -1,0 +1,58 @@
+{
+  "transactionEntityName": "de_query_definitions",
+  "transactionId": "",
+  "userId": "admin-user",
+  "useModelBinding": true,
+  "extendedProperties": {
+    "definition_key": "sales-report-query",
+    "table_name": "orders",
+    "description": "Fetches total sales grouped by region for the active fiscal year.",
+    "query_text": "SELECT region, SUM(total_amount) AS total_sales FROM orders WHERE status = 'Completed' GROUP BY region",
+    "is_active": 1,
+    "created_at": "2026-07-03T16:15:00Z",
+    "updated_at": "2026-07-03T16:15:00Z"
+  },
+  "renProps": {},
+  "delProps": {}
+}
+
+{
+  "queryNumber": 1,
+  "queryKey": "GET_PERFORMANCE_METRICS",
+  "queryText": "SELECT id, definition_key, account_number, transaction_amount, created_at FROM dev.test_performance_data WHERE definition_key = @definitionKey AND is_active = 1",
+  "enableDirectQueryExecution": false,
+  "inputParameters": {
+    "definitionKey": "KEY_025",
+    "minAmount": 2500.50,
+    "maxAmount": 7500.00,
+    "internalClassificationCode": "SYSTEM_AUDIT_SIGMA"
+  },
+  "count": 50,
+  "pageNumber": 1,
+  "enableServerSideSorting": true,
+  "sortField": "transaction_amount",
+  "sortDirection": 1,
+  "enableServerSideFiltering": true,
+  "filterConditions": [
+    {
+      "column": "is_active",
+      "field": "IsActive",
+      "operator": "EQUALS",
+      "value": 1
+    },
+    {
+      "column": "transaction_amount",
+      "field": "TransactionAmount",
+      "operator": "GREATER_THAN",
+      "value": 2500.50
+    },
+    {
+      "column": "created_at",
+      "field": "CreatedAt",
+      "operator": "GREATER_THAN_OR_EQUAL",
+      "value": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "searchText": "ACC-0025",
+  "fetchTimezone": "Asia/Calcutta"
+}
