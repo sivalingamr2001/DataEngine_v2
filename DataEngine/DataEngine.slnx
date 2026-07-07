@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="DataEngine.Core/DataEngine.Core.csproj" />
+  <Project Path="DataEngine.API/DataEngine.API.csproj" />
+  <Project Path="DataEngine.Core.Tests/DataEngine.Core.Tests.csproj" />
+</Solution>
